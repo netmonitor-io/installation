@@ -1,0 +1,12 @@
+
+sudo yum install epel-release
+
+sudo yum install redis
+
+sudo systemctl start redis
+
+sudo systemctl enable redis
+
+sudo yum install python3-pip
+
+sudo pip3 install redis

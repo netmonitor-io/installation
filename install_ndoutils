@@ -1,0 +1,100 @@
+########################### install NDOUtils : #############################
+
+############################################################################
+##################### first of all install mysql/mariaDB : #################
+############################################################################
+
+yum install epel-release -y
+
+yum install -y mysql mysql-server mysql-devel
+
+yum install mariadb mariadb-server mariadb-devel -y
+
+yum install dnf -y
+
+dnf install mariadb-connector-c-devel -y
+
+systemctl enable mariadb
+
+systemctl start mariadb
+
+# Create the MySQL database and user
+echo "CREATE DATABASE nagios DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;" | mysql -u root -p
+echo "CREATE USER 'ndoutils'@'localhost' IDENTIFIED BY 'password';" | mysql -u root -p
+echo "GRANT USAGE ON *.* TO 'ndoutils'@'localhost' IDENTIFIED BY 'password' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;" | mysql -u root -p
+#echo "GRANT ALL PRIVILEGES ON nagios.* TO 'ndoutils'@'localhost' WITH GRANT OPTION;" | mysql -u root -p
+
+cp /etc/sysctl.conf /opt -y
+
+sed -i '/msgmnb/d' /etc/sysctl.conf
+
+sed -i '/msgmax/d' /etc/sysctl.conf
+
+sed -i '/shmmax/d' /etc/sysctl.conf
+
+sed -i '/shmall/d' /etc/sysctl.conf
+
+printf "\n\nkernel.msgmnb = 131072000\n" >> /etc/sysctl.conf
+
+printf "kernel.msgmax = 131072000\n" >> /etc/sysctl.conf
+
+printf "kernel.shmmax = 4294967295\n" >> /etc/sysctl.conf
+
+printf "kernel.shmall = 268435456\n" >> /etc/sysctl.conf
+
+############################################################################
+#################### and now install ndoutils tool : #######################
+############################################################################
+
+cd /tmp
+
+wget https://github.com/NagiosEnterprises/ndoutils/archive/master.zip
+
+unzip master
+
+mv ndoutils-master ndoutils-2.1.3
+
+rm -rf master.zip
+
+cd ndoutils-2.1.3
+
+./configure
+
+make all
+
+make install
+
+cd db
+
+./installdb -u 'ndoutils' -p 'password' -h 'localhost' -d nagios
+
+cd ..
+
+make install-config
+
+make install-init
+
+cd /usr/local/nagios/etc
+
+mv ndo2db.cfg-sample ndo2db.cfg
+
+mv ndomod.cfg-sample ndomod.cfg
+
+cd /usr/local/nagios/etc
+
+sed -i 's/^db_user=.*/db_user=ndoutils/g' /usr/local/nagios/etc/ndo2db.cfg
+
+sed -i 's/^db_pass=.*/db_pass=password/g' /usr/local/nagios/etc/ndo2db.cfg
+
+systemctl enable ndo2db
+
+systemctl start ndo2db
+
+systemctl status ndo2db
+
+# Edit the Nagios configuration file
+echo "broker_module=/usr/local/nagios/bin/ndomod.o config_file=/usr/local/nagios/etc/ndomod.cfg" >> /usr/local/nagios/etc/nagios.cfg
+
+systemctl stop nagios
+
+systemctl start nagios

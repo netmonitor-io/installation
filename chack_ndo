@@ -1,0 +1,45 @@
+
+mkdir /var/www/check
+
+touch /var/www/check/check_ndo.php
+
+#################### Put this script at the file : #########################
+
+#!/bin/bash
+
+php_code="<?php
+\$ndoutils_status = exec('sudo systemctl is-failed ndo2db.service');
+
+if (\$ndoutils_status == 'failed') {
+    exec('sudo sh /var/www/check/activeNDO.sh');
+}
+
+if (\$ndoutils_status == 'inactive') {
+    exec('sudo systemctl start ndo2db.service');
+}
+
+echo \$ndoutils_status.\"\\n\";
+?>"
+
+# Specify the file name
+file_name="/var/www/check/check_ndo.php"
+
+# Create or overwrite the PHP file with the given code
+echo "$php_code" > "$file_name"
+
+echo "PHP code has been written to '$file_name'."
+
+touch /var/www/check/activeNDO.sh
+
+bash_code="
+#!/bin/bash
+
+systemctl stop ndo2db.service
+killall -9 ndo2db
+rm -f /usr/local/nagios/var/ndo2db.sock
+rm /usr/local/nagios/var/ndo.sock
+systemctl start ndo2db.service" 
+
+echo "$bash_code" > "/var/www/check/activeNDO.sh"
+
+echo "Bash code has been written too"

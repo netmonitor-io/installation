@@ -1,0 +1,25 @@
+#!/bin/bash
+
+cd ~/nagios
+
+wget https://github.com/netmonitor-io/BF-plugins/archive/refs/heads/main.zip
+
+unzip main.zip
+
+mv BF-plugins-main BF-plugins
+
+rm main.zip
+
+cd ~/nagios/BF-plugins
+
+cp check_box.py /usr/local/nagios/libexec
+
+cd ~/nagios/BF-plugins/bf-1010
+
+cp *.py /usr/local/nagios/libexec/
+
+cd ~/nagios/BF-plugins/bf-2300
+
+cp *.py /usr/local/nagios/libexec/
+
+chmod +x -R /usr/local/nagios/libexec

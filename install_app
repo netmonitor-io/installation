@@ -1,0 +1,67 @@
+########### Git ################
+
+yum install git -y
+
+############################################################################
+################### 4/ Install Laravel APP (AlarmManger) ###################
+############################################################################
+
+cd /var/www
+
+git clone https://github.com/Hamza-Idlaasri/AM-v-2.git
+
+cd /var/www/AM-v-2
+
+composer install
+
+mkdir /var/www/AM-v-2/storage/fonts
+
+chown -R apache.apache /var/www/AM-v-2
+
+chmod -R 755 /var/www/AM-v-2
+
+chmod -R 755 /var/www/AM-v-2/storage
+
+chcon -R -t httpd_sys_rw_content_t /var/www/AM-v-2/storage
+
+############################################################################
+################ 5/ Set The Encryption Key & Migrate the DB ################
+############################################################################
+
+cp .env.example .env
+
+php artisan key:generate
+
+########### Create new DB for the app #########
+
+echo "create database am default character set utf8 collate utf8_general_ci;" | mysql -u root -p
+
+########### Set DB_USERNAME and DB_PASSWORD in .env file ##########
+
+# Prompt the user for the database password
+read -s -p "Enter the database password for the Laravel project: " db_password
+
+# Edit the Laravel .env file with the database password
+ENV_FILE="/var/www/AM-v-2/.env"
+
+# Set the values in the .env file
+sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=${db_password}/" "$ENV_FILE"
+sed -i "s/^DB_PASSWORD_SECOND=.*/DB_PASSWORD_SECOND=${db_password}/" "$ENV_FILE"
+
+########## Migration ##########
+
+php artisan migrate --database=am --seed
+
+# Edit the Apache configuration file
+echo -e "\n<VirtualHost *:8080>\n\tServerName netmonitor\n\tDocumentRoot /var/www/AM-v-2/public\n\n\t<Directory /var/www/AM-v-2>\n\t\tAllowOverride All\n\t</Directory>\n</VirtualHost>\n" >> /etc/httpd/conf/httpd.conf
+
+# Add the entry to the hosts file
+sed -i "/^127.0.0.1/ s/$/ netmonitor/" /etc/hosts
+sed -i "/^::1/ s/$/ netmonitor/" /etc/hosts
+
+service httpd restart
+
+############ for PDF package add font folder ##############
+
+echo "NetMonitor installed successfuly"
+

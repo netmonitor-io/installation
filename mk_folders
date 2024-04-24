@@ -1,3 +1,5 @@
+#!/bin/bash
+
 cd /usr/local/nagios/etc/objects
 
 mkdir hosts boxes hostgroups servicegroups equipgroups boxgroups

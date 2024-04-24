@@ -1,0 +1,15 @@
+############ PHP ################
+
+yum install yum-utils -y
+
+yum-config-manager --enable remi-php72 -y
+
+yum -y install php
+
+yum install php-mysqlnd -y
+
+### Then restart the Apache. ###
+
+systemctl restart httpd
+
+echo "PHP 7.2 installed successfuly"
